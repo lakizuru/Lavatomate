@@ -8,6 +8,9 @@ const char* password = "Password";
 // Add your MQTT Broker IP address, example:
 const char* mqtt_server = "test.mosquitto.org";
 
+const int PIN_TO_SENSOR = 2;
+int pinState = LOW;  // current state of pin
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
@@ -31,6 +34,7 @@ void setup() {
   client.setCallback(callback);
 
   pinMode(ledPin, OUTPUT);
+  pinMode(PIN_TO_SENSOR, INPUT);
 }
 
 void setup_wifi() {
@@ -107,14 +111,15 @@ void loop() {
   long now = millis();
   if (now - lastMsg > 5000) {
     lastMsg = now;
-    
-  int randomNo = random(0, 100);
-    
-    // Convert the value to a char array
-    char tempString[8];
-    
-    dtostrf(randomNo, 1, 2, tempString);
-    client.publish("lavatomate/sensor1", tempString);
+    pinState = digitalRead(PIN_TO_SENSOR);
 
+    if (pinState){
+      Serial.print("Occupied\n");
+      client.publish("lavatomate/sensor1", "Occupied");
+    }
+    else {
+      Serial.print("Vacant\n");
+      client.publish("lavatomate/sensor1", "Vacant");
+    }
   }
 }
