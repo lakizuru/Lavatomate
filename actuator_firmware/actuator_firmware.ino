@@ -23,7 +23,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
 
 //replace with your network credentials
 #define WIFI_SSID "SSID"
-#define WIFI_PASSWORD "Password*"
+#define WIFI_PASSWORD "Password"
 
 
 #define MQTT_HOST "test.mosquitto.org"
@@ -38,7 +38,7 @@ AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
 
-char vacancies[5] = {'A', ' ', 'B', ' ', 'C'};
+char vacancies[9] = {'A', ' ', 'B', ' ', 'C', ' ', '-', ' ', '-'};
 
 void connectToWifi() {
   Serial.println("Connecting to Wi-Fi...");
