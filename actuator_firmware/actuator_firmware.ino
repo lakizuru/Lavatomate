@@ -1,7 +1,7 @@
 #include <WiFi.h>
 extern "C" {
-  #include "freertos/FreeRTOS.h"
-  #include "freertos/timers.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
 }
 #include <AsyncMqttClient.h>
 #include <SPI.h>
@@ -22,20 +22,23 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
                          OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
 //replace with your network credentials
-#define WIFI_SSID "Lakisuru Note 7"
-#define WIFI_PASSWORD "covid-19"
+#define WIFI_SSID "SSID"
+#define WIFI_PASSWORD "Password*"
 
 
 #define MQTT_HOST "test.mosquitto.org"
 #define MQTT_PORT 1883
 
 //MQTT Topics
-#define MQTT_SUB_TEMP_C "esp32/ds18b20/temperatureC"
-#define MQTT_SUB_TEMP_F "esp32/ds18b20/temperatureF"
+#define MQTT_SUB_SENSOR_1 "lavatomate/sensor1"
+#define MQTT_SUB_SENSOR_2 "lavatomate/sensor2"
+#define MQTT_SUB_SENSOR_3 "lavatomate/sensor3"
 
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
+
+char vacancies[5] = {'A', ' ', 'B', ' ', 'C'};
 
 void connectToWifi() {
   Serial.println("Connecting to Wi-Fi...");
@@ -68,12 +71,9 @@ void onMqttConnect(bool sessionPresent) {
   Serial.println("Connected to MQTT.");
   Serial.print("Session present: ");
   Serial.println(sessionPresent);
-  uint16_t packetIdSub = mqttClient.subscribe(MQTT_SUB_TEMP_C, 2);
-  Serial.print("Subscribing at QoS 2, packetId: ");
-  Serial.println(packetIdSub);
-  packetIdSub = mqttClient.subscribe(MQTT_SUB_TEMP_F, 2);
-  Serial.print("Subscribing at QoS 2, packetId: ");
-  Serial.println(packetIdSub);
+  uint16_t packetIdSub1 = mqttClient.subscribe(MQTT_SUB_SENSOR_1, 2);
+  uint16_t packetIdSub2 = mqttClient.subscribe(MQTT_SUB_SENSOR_2, 2);
+  uint16_t packetIdSub3 = mqttClient.subscribe(MQTT_SUB_SENSOR_3, 2);
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -107,41 +107,34 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     messageTemp += (char)payload[i];
   }
 
-  if (String(topic) == "esp32/ds18b20/temperatureC") {
-    Serial.print("\n Temperature: ");
+  if (String(topic) == "lavatomate/sensor1") {
     Serial.println(messageTemp);
-    display.setCursor(0, 0);
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.print("Temperature");
-    display.setTextSize(2);
-    display.setCursor(0, 45);
-    display.print(messageTemp);
-    display.print(" ");
-    display.setTextSize(1);
-    display.cp437(true);
-    display.write(167);
-    display.setTextSize(2);
-    display.print("C");
-    display.display();
+    if (messageTemp == "true"){
+      vacancies[0] = ' ';
+    }
+    else if (messageTemp == "false"){
+      vacancies[0] = 'A';
+    }
   }
 
-  if (String(topic) == "esp32/ds18b20/temperatureF") {
-    Serial.print("\n Temperature: ");
+  if (String(topic) == "lavatomate/sensor2") {
     Serial.println(messageTemp);
-    display.setTextSize(1);
-    display.setCursor(0, 35);
-    display.print("Temperature");
-    display.setTextSize(2);
-    display.setCursor(0, 10);
-    display.print(messageTemp);
-    display.print(" ");
-    display.setTextSize(1);
-    display.cp437(true);
-    display.write(167);
-    display.setTextSize(2);
-    display.print("F");
-    display.display();
+    if (messageTemp == "true"){
+      vacancies[2] = ' ';
+    }
+    else if (messageTemp == "false"){
+      vacancies[2] = 'B';
+    }
+  }
+
+  if (String(topic) == "lavatomate/sensor3") {
+    Serial.println(messageTemp);
+    if (messageTemp == "true"){
+      vacancies[4] = ' ';
+    }
+    else if (messageTemp == "false"){
+      vacancies[4] = 'C';
+    }
   }
 }
 
@@ -150,9 +143,8 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  //initialize OLED
   delay(2000);
   display.clearDisplay();
-  display.setTextSize(1);
+  display.setTextSize(2);
   display.setTextColor(WHITE);
-  display.setCursor(0, 0);
   Serial.println();
 
   mqttReconnectTimer = xTimerCreate("mqttTimer", pdMS_TO_TICKS(2000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToMqtt));
@@ -170,4 +162,16 @@ void setup() {
 }
 
 void loop() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 2);
+  display.print("Lavatomate");
+  display.setCursor(0, 30);
+  display.setTextSize(1.5);
+  display.print("Vacant Lavatories: ");
+  display.setCursor(0, 50);
+  display.setTextSize(2);
+  display.print(vacancies);
+  display.display();
+  display.startscrollleft(0x0D, 0x0F);
 }
