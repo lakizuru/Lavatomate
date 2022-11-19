@@ -34,11 +34,17 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
 #define MQTT_SUB_SENSOR_2 "lavatomate/sensor2"
 #define MQTT_SUB_SENSOR_3 "lavatomate/sensor3"
 
+#define MQTT_SUB_STATUS_1 "lavatomate/status1"
+#define MQTT_SUB_STATUS_2 "lavatomate/status2"
+#define MQTT_SUB_STATUS_3 "lavatomate/status3"
+
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
 
 char vacancies[9] = {'A', ' ', 'B', ' ', 'C', ' ', '-', ' ', '-'};
+
+bool disabled[5] = {false, false, false, false, false};
 
 void connectToWifi() {
   Serial.println("Connecting to Wi-Fi...");
@@ -112,7 +118,10 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     if (messageTemp == "true"){
       vacancies[0] = ' ';
     }
-    else if (messageTemp == "false"){
+    else if (messageTemp == "false" and disabled[0] == true){
+      vacancies[0] = ' ';
+    }
+    else if (messageTemp == "false" and disabled[0] == false){
       vacancies[0] = 'A';
     }
   }
@@ -122,7 +131,10 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     if (messageTemp == "true"){
       vacancies[2] = ' ';
     }
-    else if (messageTemp == "false"){
+    else if (messageTemp == "false" and disabled[1] == true){
+      vacancies[2] = ' ';
+    }
+    else if (messageTemp == "false" and disabled[1] == false){
       vacancies[2] = 'B';
     }
   }
@@ -132,8 +144,41 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     if (messageTemp == "true"){
       vacancies[4] = ' ';
     }
-    else if (messageTemp == "false"){
+    else if (messageTemp == "false" and disabled[2] == true){
+      vacancies[4] = ' ';
+    }
+    else if (messageTemp == "false" and disabled[2] == false){
       vacancies[4] = 'C';
+    }
+  }
+
+  if (String(topic) == "lavatomate/status1") {
+    Serial.println(messageTemp);
+    if (messageTemp == "true"){
+      disabled[0] = true;
+    }
+    else if (messageTemp == "false"){
+      disabled[0] = false;
+    }
+  }
+
+  if (String(topic) == "lavatomate/status2") {
+    Serial.println(messageTemp);
+    if (messageTemp == "true"){
+      disabled[1] = true;
+    }
+    else if (messageTemp == "false"){
+      disabled[1] = false;
+    }
+  }
+
+  if (String(topic) == "lavatomate/status3") {
+    Serial.println(messageTemp);
+    if (messageTemp == "true"){
+      disabled[2] = true;
+    }
+    else if (messageTemp == "false"){
+      disabled[2] = false;
     }
   }
 }
