@@ -42,9 +42,12 @@ AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
 TimerHandle_t wifiReconnectTimer;
 
-char vacancies[9] = {'A', ' ', 'B', ' ', 'C', ' ', '-', ' ', '-'};
 
-bool disabled[5] = {false, false, false, false, false};
+char displayout[6] = {' ', ' ', ' ', ' ', ' ', ' '};
+
+bool vacancies[3] = {true, true, true};
+
+bool disabled[3] = {false, false, false};
 
 void connectToWifi() {
   Serial.println("Connecting to Wi-Fi...");
@@ -80,6 +83,10 @@ void onMqttConnect(bool sessionPresent) {
   uint16_t packetIdSub1 = mqttClient.subscribe(MQTT_SUB_SENSOR_1, 2);
   uint16_t packetIdSub2 = mqttClient.subscribe(MQTT_SUB_SENSOR_2, 2);
   uint16_t packetIdSub3 = mqttClient.subscribe(MQTT_SUB_SENSOR_3, 2);
+
+  uint16_t packetIdSub4 = mqttClient.subscribe(MQTT_SUB_STATUS_1, 2);
+  uint16_t packetIdSub5 = mqttClient.subscribe(MQTT_SUB_STATUS_2, 2);
+  uint16_t packetIdSub6 = mqttClient.subscribe(MQTT_SUB_STATUS_3, 2);
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -116,39 +123,29 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   if (String(topic) == "lavatomate/sensor1") {
     Serial.println(messageTemp);
     if (messageTemp == "true"){
-      vacancies[0] = ' ';
+      vacancies[0] = false;
     }
-    else if (messageTemp == "false" and disabled[0] == true){
-      vacancies[0] = ' ';
-    }
-    else if (messageTemp == "false" and disabled[0] == false){
-      vacancies[0] = 'A';
+    else if (messageTemp == "false") {
+      vacancies[0] = true;
     }
   }
 
   if (String(topic) == "lavatomate/sensor2") {
     Serial.println(messageTemp);
     if (messageTemp == "true"){
-      vacancies[2] = ' ';
+      vacancies[1] = false;
     }
-    else if (messageTemp == "false" and disabled[1] == true){
-      vacancies[2] = ' ';
-    }
-    else if (messageTemp == "false" and disabled[1] == false){
-      vacancies[2] = 'B';
+    else if (messageTemp == "false") {
+      vacancies[1] = true;
     }
   }
 
   if (String(topic) == "lavatomate/sensor3") {
-    Serial.println(messageTemp);
     if (messageTemp == "true"){
-      vacancies[4] = ' ';
+      vacancies[2] = false;
     }
-    else if (messageTemp == "false" and disabled[2] == true){
-      vacancies[4] = ' ';
-    }
-    else if (messageTemp == "false" and disabled[2] == false){
-      vacancies[4] = 'C';
+    else if (messageTemp == "false") {
+      vacancies[2] = true;
     }
   }
 
@@ -207,6 +204,27 @@ void setup() {
 }
 
 void loop() {
+  if (vacancies[0] == true and disabled[0] == false) {
+    displayout[0] = 'A';
+  }
+  else if (vacancies[0] == false or disabled[0] == true) {
+    displayout[0] = ' ';
+  }
+  
+  if (vacancies[1] == true and disabled[1] == false) {
+    displayout[2] = 'B';
+  }
+  else if (vacancies[1] == false or disabled[1] == true) {
+    displayout[2] = ' ';
+  }
+  
+  if (vacancies[2] == true and disabled[2] == false) {
+    displayout[4] = 'C';
+  }
+  else if (vacancies[2] == false or disabled[2] == true) {
+    displayout[4] = ' ';
+  }
+  
   display.clearDisplay();
   display.setTextSize(2);
   display.setCursor(0, 2);
@@ -216,7 +234,7 @@ void loop() {
   display.print("Vacant Lavatories: ");
   display.setCursor(0, 50);
   display.setTextSize(2);
-  display.print(vacancies);
+  display.print(displayout);
   display.display();
   display.startscrollleft(0x0D, 0x0F);
 }
